@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Movie Catalog</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: auto;
+    }
+
+    .controls, .form {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+
+    input {
+      padding: 8px;
+      flex: 1;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    button {
+      padding: 8px 12px;
+      border: none;
+      background: #3498db;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #2980b9;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      background: white;
+      margin-bottom: 10px;
+      padding: 12px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .movie-info {
+      font-size: 14px;
+    }
+
+    .actions button {
+      margin-left: 5px;
+      background: #2ecc71;
+    }
+
+    .actions button.delete {
+      background: #e74c3c;
+    }
+
+    .actions button:hover {
+      opacity: 0.9;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <h1>🎬 Movie Catalog</h1>
+
+  <div class="controls">
+    <button onclick="loadMovies()">Display Movies</button>
+    <input type="text" id="searchInput" placeholder="Search movie title..." />
+    <button onclick="searchMovies()">Search</button>
+  </div>
+
+  <ul id="list"></ul>
+
+  <h1>Add Movie</h1>
+
+  <div class="form">
+    <input type="text" id="title" placeholder="Movie Title" />
+    <input type="text" id="genre" placeholder="Genre" />
+    <input type="text" id="year" placeholder="Release Year" />
+    <button onclick="addMovie()">Submit</button>
+  </div>
+
+</div>
+
+<script>
+
+const API = "/movies";
+
+async function loadMovies() {
+  const res = await fetch(API);
+  const data = await res.json();
+  displayMovies(data);
+}
+
+function displayMovies(data) {
+  const list = document.getElementById("list");
+  list.innerHTML = "";
+
+  data.forEach(movie => {
+    const li = document.createElement("li");
+
+    li.innerHTML = `
+      <div class="movie-info">
+        <strong>${movie.title}</strong><br>
+        Genre: ${movie.genre} | Year: ${movie.year}
+      </div>
+
+      <div class="actions">
+        <button onclick="editMovie(${movie.id})">Edit</button>
+        <button class="delete" onclick="deleteMovie(${movie.id})">Delete</button>
+      </div>
+    `;
+
+    list.appendChild(li);
+  });
+}
+
+async function searchMovies() {
+  const query = document.getElementById("searchInput").value;
+  const res = await fetch(`/search?title=${query}`);
+  const data = await res.json();
+  displayMovies(data);
+}
+
+async function addMovie() {
+  const title = document.getElementById("title").value;
+  const genre = document.getElementById("genre").value;
+  const year = document.getElementById("year").value;
+
+  await fetch(API, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title, genre, year })
+  });
+
+  loadMovies();
+}
+
+async function deleteMovie(id) {
+  await fetch(`${API}/${id}`, { method: "DELETE" });
+  loadMovies();
+}
+
+async function editMovie(id) {
+  const title = prompt("Enter new title:");
+  const genre = prompt("Enter new genre:");
+  const year = prompt("Enter new release year:");
+
+  await fetch(`${API}/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title, genre, year })
+  });
+
+  loadMovies();
+}
+
+</script>
+
+</body>
+</html>
